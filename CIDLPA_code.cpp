@@ -20,32 +20,18 @@ x3 - y3
 .
 ....
 
-7 1
-10
-1 2
-1 4
-2 3
-2 4
-3 4
-1 5
-1 7
-5 6
-5 7
-6 7
-
-
 */
 
 #include<bits/stdc++.h>
 using namespace std;
 
 const int N = 1000, T = 100;
-set<int> adj[T][N];
-set<pair<int,int>> edge[T];
+set<int> adj[T][N]; // adj[T] is adjacency list representation of graph at timestamp t
+set<pair<int,int>> edge[T]; // edge[t] stores the edge list for timestamp t 
 set<int> G[T];
-map<int,double> Label[N];
-map<int,double> b[T][N];
-double S[2][N];
+map<int,double> Label[N]; // Label[x][l], x -> node, l -> label
+map<int,double> b[T][N]; // b[t][x][l], x -> node, l -> label
+double S[2][N]; // S[i][x] is belonging factor of node x to Si state
 
 set<int> v_change(int t1, int t2)
 {
@@ -139,6 +125,7 @@ vector<int> get_labels(vector<int> &neighb)
 
 vector<double> compute_vote(vector<int> &candidateLabels, vector<int> &neighb)
 {
+    // each neighbour chooses a label and candidateLabels set and votes it
     vector<double> vote;
     for(int i = 0; i < neighb.size(); i++)
     {
@@ -167,16 +154,49 @@ int get_maximum_vote(vector<double> &vote, vector<int> &candidateLabels)
 
 void normalize(int x, int t)
 {
+    vector<pair<int,int>> remove;
     for(auto &[c,bf]: Label[x])
     {
+        // finding new belonging factor for the next timestamp
         double new_bf = 0;
         for(auto y: adj[t][x])
         {
-            new_bf += b[t][c][y];
+            // if c community i present in the label set of y and has non zero belongiong factor
+            if(b[t][y].find(c) != b[t][y].end())
+                new_bf += b[t][y][c];
         }
         new_bf /= adj[t][x].size();
+        
         Label[x][c] = new_bf;
-        b[t+1][c][x] = new_bf;
+        b[t+1][x][c] = new_bf;
+        if(new_bf == 0)
+        {
+            // if new belonging factor is 0 then we will remove c from label set of x
+            remove.push_back({x,c});
+        }
+    }
+
+    // removing all the communities with new belonging factor 0 from their corresponding node's label set
+    for(auto &[x,c]: remove)
+    {
+        Label[x].erase(c);
+        b[t+1][x].erase(c);
+    }
+
+    // normalize sum of bf to 1
+    double sum = 0;
+    for(auto &[l,bf]: b[t+1][x])
+    {
+        sum += bf;
+    }
+    if(sum == 0) b[t+1][x][x] = 1;
+    else
+    {
+        double mul_val = 1/sum;
+        for(auto &[l,bf]: b[t+1][x])
+        {
+            bf *= mul_val;
+        }
     }
 }
 
@@ -184,26 +204,41 @@ void remove_labels(int t, int r, set<int> &set_changedNodes)
 {
     for(auto x: set_changedNodes)
     {
+        // remove labels with belonging factor less than r
         vector<int> remove;
         double sum = 0;
+        int mx_label = x;
+        double mx_bf = 0; 
         for(auto &[l,bf]: Label[x])
         {
-            if(bf < r){ remove.push_back(l); sum+=bf; }
+            if(bf < r)
+            { 
+                remove.push_back(l);
+                Label[x].erase(l); 
+                b[t+1][x].erase(l); 
+                sum += bf;
+                if(bf > mx_bf)
+                {
+                    mx_bf = bf;
+                    mx_label =l;
+                } 
+            }
         }
 
-        for(auto l: remove){  Label[x].erase(l); b[t+1][l][x]=0.00; }
-        if(remove.size()==Label[x].size()){  /// random or max
-            srand(time(0));
-            int l =  rand()%((int)Label[x].size());
-            Label[x][remove[l]]=1.00;
-            b[t+1][remove[l]][x]=1.00;
+        // If label set of node x becomes empty then pick the label with max belonging factor removed, and set it bf = 1
+        if(Label[x].empty())
+        {  
+            Label[x][mx_label] = 1.00;
+            b[t+1][x][mx_label] = 1.00;
         }
-        else{
-            int val = sum/remove.size();
+        else
+        {
+            // Add the val to belonging factor of all the labels of node x remaining so that sum of bf of labels remain 1
+            double val = sum / Label[x].size();
             for(auto &[l,bf]: Label[x])
             {
-                Label[x][l]+=val;
-                b[t+1][l][x]+=val;
+                Label[x][l] += val;
+                b[t+1][x][l] += val;
             }
         }
     }
@@ -212,8 +247,12 @@ void remove_labels(int t, int r, set<int> &set_changedNodes)
 
 int main()
 {
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
+
     // Input
-    int n, ts, r = 0.5;
+    int n, ts;
+    double r = 0.5;
     cin >> n >> ts;
     for(int t = 0; t < ts; t++)
     {
@@ -257,8 +296,6 @@ int main()
         if(t != ts-1) v = v_change(t+1, t);
     }
 
-    for(int i=1;i<=n;i++) cout<<S[0][i]<<" "<<S[1][i]<<endl;
-
 
     // Part 3
     set<pair<int,int>> e = edge[0];
@@ -269,12 +306,12 @@ int main()
         if(t!=ts-1) Vold = v_change(t, t+1);
         for(auto x: Vold) set_changedNodes.erase(x);
 
-        for(int it = 0; it < ts; it++)
+        for(int it = 0; it <= ts; it++)
         {
             vector<int> changedNodes;
             for(auto x: set_changedNodes) changedNodes.push_back(x);
             shuffle(changedNodes.begin(), changedNodes.end(), default_random_engine(0));
-            for(auto it:changedNodes) cout<<it<<" ";
+                   
             for(auto x: changedNodes)
             {
                 vector<int> neighb;
@@ -288,11 +325,24 @@ int main()
         }
         remove_labels(t, r, set_changedNodes);
         if(t != ts-1) e = e_change(t);
+
+
+        // printing belonging factor
+        // cout << " ------- TIME " << t+1 << " -------- " << endl;
+        // for(int x = 1; x <= n; x++)
+        // {
+        //     cout << "Node " << x << " -> " << endl;
+        //     for(auto &[l,bf]: b[t+1][x])
+        //     {
+        //         cout << l << ": " << bf << endl; 
+        //     }
+        // }
     }
+
 
     // Output
     set<int> res[n+1];
-    for(int i = 0; i <= n; i++)
+    for(int i = 1; i <= n; i++)
     {
         for(auto &[l, bf]: Label[i])
         {
@@ -300,9 +350,10 @@ int main()
         }
     }
 
-    for(int i = 0; i <= n; i++)
+    cout << endl;
+    for(int i = 1; i <= n; i++)
     {
-        if(res[i].size() == 0) continue;
+        if(res[i].size() <= 1) continue;
         cout << "Community " << i << " -> ";
         for(auto x: res[i]) cout << x << " ";
         cout << endl;
