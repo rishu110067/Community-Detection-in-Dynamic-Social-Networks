@@ -353,7 +353,7 @@ int main()
 
     for(int i = 0; i <= n; i++)
     {
-        if(res[i].size() <= 1) continue;
+        if(res[i].size() == 0) continue;
         for(auto x: res[i]) cout << x << " ";
         cout << endl;
     }
