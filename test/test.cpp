@@ -22,7 +22,7 @@ x3 - y3
 
 */
 
-#include<bits/stdc++.h>
+#include <bits/stdc++.h>
 using namespace std;
 
 const int N = 10000, T = 100;   // setting maximum no. of nodes 10000 and max no. of timestamps 100
