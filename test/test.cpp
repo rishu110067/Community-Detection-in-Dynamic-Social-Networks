@@ -27,7 +27,7 @@ using namespace std;
 
 const int N = 10000, T = 100;   // setting maximum no. of nodes 10000 and max no. of timestamps 100
 set<int> adj[T][N];             // adj[T] is adjacency list representation of graph at timestamp t
-set<pair<int,int>> edge[T];     // edge[t] stores the edge list for timestamp t 
+set<pair<int,int>> edge[T];     // edge[t] stores the edge list for timestamp t
 set<int> G[T];                  // G[t] is vertex set of nodes of Graph at timestamp t
 map<int,double> Label[N];       // Label[x][l], x -> node, l -> label
 map<int,double> b[T][N];        // b[t][x][l], x -> node, l -> label
@@ -63,9 +63,9 @@ set<pair<int,int>> e_change(int t)
 double find_strength(int i, int j, int t)
 {
     int set_div = 0;
-    for(auto x: adj[t][i])
+    for(auto x: adj[t][j])
     {
-        if(x!=j && adj[t][j].find(x) == adj[t][j].end())
+        if(x!=i && adj[t][i].find(x) == adj[t][i].end())
             set_div++;
     }
     double val = (double)set_div/adj[t][j].size();
@@ -87,6 +87,7 @@ void find_belonging(int i, vector<double> &strength)
 {
     double sum_strength = 0;
     for(auto it:strength) sum_strength+=it;
+    //cout<<sum_strength<<" "<<strength.size()<<endl;
     S[1][i] = sum_strength/strength.size();
     S[0][i] = 1.00 - S[1][i];
 }
@@ -125,7 +126,7 @@ vector<int> get_labels(vector<int> &neighb)
 vector<double> compute_vote(vector<int> &candidateLabels, vector<int> &neighb)
 {
     // each neighbour chooses a label and candidateLabels set and votes it
-    vector<double> vote;
+    /* vector<double> vote;
     for(int i = 0; i < neighb.size(); i++)
     {
         int j = neighb[i];
@@ -134,6 +135,23 @@ vector<double> compute_vote(vector<int> &candidateLabels, vector<int> &neighb)
         vote.push_back(v);
     }
     return vote;
+    */
+    vector<double> vote;
+    for(int i = 0; i < candidateLabels.size(); i++)
+    {
+        double v = 0.00;
+        for(int k =0;k< neighb.size();k++){
+            int j = neighb[k];
+            int sl = candidateLabels[i];
+            if(Label[j].find(sl) != Label[j].end()){
+                //cout<<j<<" "<<S[0][j]<<" "<<S[1][j]<<" "<<Label[j][sl]<<endl;
+                v += (double)S[0][j] * Label[j][sl] + (double)S[1][j] * ((1 - Label[j][sl]) / 3.0);
+            }
+        }
+        vote.push_back(v);
+    }
+    return vote;
+
 }
 
 int get_maximum_vote(vector<double> &vote, vector<int> &candidateLabels)
@@ -164,17 +182,17 @@ void normalize(int x, int t)
             if(b[t][y].find(c) != b[t][y].end())
                 new_bf += b[t][y][c];
         }
+
         new_bf /= adj[t][x].size();
-        
+        //cout<<c<<" "<<new_bf<<endl;
         Label[x][c] = new_bf;
         b[t+1][x][c] = new_bf;
-        if(new_bf == 0)
+        if(new_bf == 0.00)
         {
             // If new belonging factor is 0 then we will remove c from label set of x
             remove.push_back({x,c});
         }
     }
-
     // Removing all the communities with new belonging factor 0 from their corresponding node's label set
     for(auto &[x,c]: remove)
     {
@@ -188,14 +206,16 @@ void normalize(int x, int t)
     {
         sum += bf;
     }
-    if(sum == 0) b[t+1][x][x] = 1;
+    if(sum == 0){ Label[x][x] = 1; b[t+1][x][x] = 1; }
     else
     {
-        double mul_val = 1/sum;
+        double mul_val = (1.00 - sum)/(b[t+1][x].size());
         for(auto &[l,bf]: b[t+1][x])
         {
-            bf *= mul_val;
+            bf += mul_val;
+            Label[x][l] = bf;
         }
+
     }
 }
 
@@ -207,33 +227,33 @@ void remove_labels(int t, int r, set<int> &set_changedNodes)
         vector<int> remove;
         double sum = 0;
         int mx_label = x;
-        double mx_bf = 0; 
+        double mx_bf = 0;
         for(auto &[l,bf]: Label[x])
         {
             if(bf < r)
-            { 
+            {
                 remove.push_back(l);
-                Label[x].erase(l); 
-                b[t+1][x].erase(l); 
+                Label[x].erase(l);
+                b[t+1][x].erase(l);
                 sum += bf;
                 if(bf > mx_bf)
                 {
                     mx_bf = bf;
                     mx_label =l;
-                } 
+                }
             }
         }
 
         // If label set of node x becomes empty then pick the label with max belonging factor removed, and set it bf = 1
         if(Label[x].empty())
-        {  
+        {
             Label[x][mx_label] = 1.00;
             b[t+1][x][mx_label] = 1.00;
         }
         else
         {
             // Add the val to belonging factor of all the labels of node x remaining so that sum of bf of labels remain 1
-            double val = sum / Label[x].size();
+            double val = (1.00-sum) / Label[x].size();
             for(auto &[l,bf]: Label[x])
             {
                 Label[x][l] += val;
@@ -251,8 +271,10 @@ int main()
     freopen("output.txt", "w", stdout);
 
     // Input: n = no of nodes, ts = no of timestamps
-    int n, ts; 
-    double r = 0.5;
+
+
+    int n, ts;
+    double r = 0.2;
     cin >> n >> ts;
     for(int t = 0; t < ts; t++)
     {
@@ -268,7 +290,9 @@ int main()
             G[t].insert(x);
             G[t].insert(y);
         }
-    } 
+    }
+
+
 
     // Part 1
     set<int> v = G[0];
@@ -281,6 +305,8 @@ int main()
         }
         if(t != ts-1) v = v_change(t+1, t);
     }
+
+
 
     // Part 2
     v = G[0];
@@ -296,35 +322,48 @@ int main()
         if(t != ts-1) v = v_change(t+1, t);
     }
 
+    //for(int i=0;i<n;i++) cout<<S[0][i]<<" "<<S[1][i]<<endl;
+
 
     // Part 3
     set<pair<int,int>> e = edge[0];
+    set<int> set_changedNodes = find_nodes(e);
     for(int t = 0; t < ts; t++)
     {
+
         set<int> set_changedNodes = find_nodes(e);
         set<int> Vold;
         if(t!=ts-1) Vold = v_change(t, t+1);
         for(auto x: Vold) set_changedNodes.erase(x);
 
-        for(int it = 0; it <= ts; it++)
+        for(int it = 0; it < ts; it++)
         {
             vector<int> changedNodes;
             for(auto x: set_changedNodes) changedNodes.push_back(x);
             shuffle(changedNodes.begin(), changedNodes.end(), default_random_engine(0));
-                   
+
             for(auto x: changedNodes)
             {
                 vector<int> neighb;
+                //cout<<x<<endl;
                 for(auto i: adj[t][x]) neighb.push_back(i);
                 vector<int> candidateLabels = get_labels(neighb);
+                //for(auto it:candidateLabels) cout<<it<<" ";
+                //cout<<endl;
                 vector<double> vote = compute_vote(candidateLabels, neighb);
+                //for(auto it:vote) cout<<it<<" ";
+                //cout<<endl;
                 int mx_vote_label = get_maximum_vote(vote, candidateLabels);
-                Label[x][mx_vote_label] = 0;
+                if(Label[x].find(mx_vote_label) == Label[x].end())
+                    Label[x][mx_vote_label] = 0;
                 normalize(x,t);
+
             }
+
+
         }
         remove_labels(t, r, set_changedNodes);
-        if(t != ts-1) e = e_change(t);
+        //if(t != ts-1) e = e_change(t);
 
         /*
         printing belonging factor
@@ -334,12 +373,19 @@ int main()
             cout << "Node " << x << " -> " << endl;
             for(auto &[l,bf]: b[t+1][x])
             {
-                cout << l << ": " << bf << endl; 
+                cout << l << ": " << bf << endl;
             }
         }
         */
     }
-
+    /*for(int i=0;i<n;i++){
+        cout<<i<<" ";
+        for(auto &[l,bf]: Label[i]){
+            cout<<l<<" ";
+        }
+        cout<<endl;
+    }
+    */
 
     // Output
     set<int> res[n+1];
@@ -360,3 +406,29 @@ int main()
 
     return 0;
 }
+
+/*
+7 2
+10
+0 1
+1 2
+2 3
+1 3
+0 3
+0 4
+0 6
+4 6
+4 5
+5 6
+10
+0 1
+1 2
+2 3
+1 3
+0 3
+0 4
+0 6
+4 6
+4 5
+5 6
+*/
