@@ -38,24 +38,25 @@ def make_input(G, label, T):
                 A[i][j]+=1
     
     f.write(str(n) + ' ' + str(T) + '\n')
-    file_write(A, m, l, r, f)
-
-    for t in range(1, T):
-        changes = random.randint(4, 7)
-        for k in range(0, changes):
-            while True:
-                i = random.randint(l,r)
-                j = random.randint(l,r)
-                if A[i][j] == 1:
-                    A[i][j] -= 1
-                    break
-            while True:
-                i = random.randint(l,r)
-                j = random.randint(l,r)
-                if A[i][j] == 0:
-                    A[i][j] += 1
-                    break
+    for i in range(0, T):
         file_write(A, m, l, r, f)
+
+    # for t in range(1, T):
+    #     changes = random.randint(4, 7)
+    #     for k in range(0, changes):
+    #         while True:
+    #             i = random.randint(l,r)
+    #             j = random.randint(l,r)
+    #             if A[i][j] == 1:
+    #                 A[i][j] -= 1
+    #                 break
+    #         while True:
+    #             i = random.randint(l,r)
+    #             j = random.randint(l,r)
+    #             if A[i][j] == 0:
+    #                 A[i][j] += 1
+    #                 break
+    #     file_write(A, m, l, r, f)
 
     f.close()
     

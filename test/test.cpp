@@ -324,7 +324,6 @@ int main()
 
     //for(int i=0;i<n;i++) cout<<S[0][i]<<" "<<S[1][i]<<endl;
 
-
     // Part 3
     set<pair<int,int>> e = edge[0];
     set<int> set_changedNodes = find_nodes(e);
