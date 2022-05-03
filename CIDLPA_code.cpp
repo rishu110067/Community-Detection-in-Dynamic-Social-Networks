@@ -319,7 +319,7 @@ int main()
     ts++;
 
     
-    // Part 1
+    // Part 1: Initialization
     set<int> v = G[0];
     for(int t = 0; t < ts; t++)
     {
@@ -332,7 +332,7 @@ int main()
     }
 
 
-    // Part 2
+    // Part 2: CID 
     v = G[0];
     for(int t = 0; t < ts; t++)
     {
@@ -347,7 +347,7 @@ int main()
     }
 
 
-    // Part 3
+    // Part 3: Label Propagation
     set<pair<int,int>> e = edge[0];
     set<int> set_changedNodes = find_nodes(e);
     for(int t = 0; t < ts; t++)
