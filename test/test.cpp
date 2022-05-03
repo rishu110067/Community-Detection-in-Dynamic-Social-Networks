@@ -386,7 +386,10 @@ int main()
     }
     */
 
-    // Output
+    
+    // Part 4: Priting Result
+    
+    // Finding communities from label
     set<int> res[n+1];
     for(int i = 0; i <= n; i++)
     {
@@ -396,10 +399,51 @@ int main()
         }
     }
 
+    // Storing communities
+    vector<set<int>> comm_set;
     for(int i = 0; i <= n; i++)
     {
         if(res[i].size() == 0) continue;
-        for(auto x: res[i]) cout << x << " ";
+        set<int> s;
+        for(auto x: res[i]) s.insert(x);
+        comm_set.push_back(s);
+    }
+
+    // for(auto s: comm_set)
+    // {
+    //     for(auto x: s) cout << x << " ";
+    //     cout << endl;
+    // }
+    // cout << endl;
+
+    // Removing communities which are subset of other community
+    vector<set<int>> communities; 
+    for(int i = 0; i < comm_set.size(); i++)
+    {
+        int is_subset = 0;
+        for(int j = 0; j < comm_set.size(); j++)
+        {
+            if(i == j) continue;
+
+            // check if community i is present in community j
+            is_subset = 1;
+            for(auto x: comm_set[i])
+            {
+                if(comm_set[j].find(x) == comm_set[j].end())
+                {
+                    is_subset = 0;
+                    break;
+                }
+            }
+            if(is_subset) break;
+        }
+        if(!is_subset) communities.push_back(comm_set[i]);
+    }
+
+    // Output
+    for(auto s: communities)
+    {
+        for(auto x: s) cout << x << " ";
         cout << endl;
     }
 
