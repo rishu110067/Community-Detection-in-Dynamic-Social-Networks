@@ -95,8 +95,10 @@ void find_belonging(int i, vector<double> &strength)
 set<int> find_nodes(set<pair<int,int>> e)
 {
     set<int> nodes;
-    for(auto &[x,y]: e)
+    for(auto it: e)
     {
+        auto x = it.first;
+        auto y = it.second;
         nodes.insert(x);
         nodes.insert(y);
     }
@@ -110,8 +112,10 @@ vector<int> get_labels(vector<int> &neighb)
     {
         double mx_bf = 0;
         int mx_label = x;
-        for(auto &[l,bf]: Label[x])
+        for(auto it: Label[x])
         {
+            auto l = it.first;
+            auto bf = it.second;
             if(bf > mx_bf)
             {
                 mx_label = l;
@@ -172,8 +176,10 @@ int get_maximum_vote(vector<double> &vote, vector<int> &candidateLabels)
 void normalize(int x, int t)
 {
     vector<pair<int,int>> remove;
-    for(auto &[c,bf]: Label[x])
+    for(auto it: Label[x])
     {
+        auto c = it.first;
+        auto bf = it.second;
         // Finding new belonging factor for the next timestamp
         double new_bf = 0;
         for(auto y: adj[t][x])
@@ -194,28 +200,33 @@ void normalize(int x, int t)
         }
     }
     // Removing all the communities with new belonging factor 0 from their corresponding node's label set
-    for(auto &[x,c]: remove)
+    for(auto it: remove)
     {
+        auto x = it.first;
+        auto c = it.second;
         Label[x].erase(c);
         b[t+1][x].erase(c);
     }
 
     // Normalize sum of bf to 1
     double sum = 0;
-    for(auto &[l,bf]: b[t+1][x])
+    for(auto it: b[t+1][x])
     {
+        auto l = it.first;
+        auto bf = it.second;
         sum += bf;
     }
     if(sum == 0){ Label[x][x] = 1; b[t+1][x][x] = 1; }
     else
     {
-        double mul_val = (1.00 - sum)/(b[t+1][x].size());
-        for(auto &[l,bf]: b[t+1][x])
+        double add_val = (1.00 - sum)/(b[t+1][x].size());
+        for(auto it: b[t+1][x])
         {
-            bf += mul_val;
-            Label[x][l] = bf;
+            auto l = it.first;
+            auto bf = it.second;
+            b[t+1][x][l] += add_val;
+            Label[x][l] = b[t+1][x][l];
         }
-
     }
 }
 
@@ -228,8 +239,10 @@ void remove_labels(int t, int r, set<int> &set_changedNodes)
         double sum = 0;
         int mx_label = x;
         double mx_bf = 0;
-        for(auto &[l,bf]: Label[x])
+        for(auto it: Label[x])
         {
+            auto l = it.first;
+            auto bf = it.second;
             if(bf < r)
             {
                 remove.push_back(l);
@@ -254,8 +267,10 @@ void remove_labels(int t, int r, set<int> &set_changedNodes)
         {
             // Add the val to belonging factor of all the labels of node x remaining so that sum of bf of labels remain 1
             double val = (1.00-sum) / Label[x].size();
-            for(auto &[l,bf]: Label[x])
+            for(auto it: Label[x])
             {
+                auto l = it.first;
+                auto bf = it.second;
                 Label[x][l] += val;
                 b[t+1][x][l] += val;
             }
@@ -289,7 +304,7 @@ int main()
             adj[t][y].insert(x);
             G[t].insert(x);
             G[t].insert(y);
-            if(t == ts-1) 
+            if(t == ts-1)
             {
                 edge[ts].insert({x, y});
                 adj[ts][x].insert(y);
@@ -310,7 +325,7 @@ int main()
         for(auto x: v)
         {
             Label[x][x] = 1;
-            b[0][x][x] = 1;
+            b[t][x][x] = 1;
         }
         if(t != ts-1) v = v_change(t+1, t);
     }
@@ -332,6 +347,7 @@ int main()
     }
 
     //for(int i=0;i<n;i++) cout<<S[0][i]<<" "<<S[1][i]<<endl;
+
 
     // Part 3
     set<pair<int,int>> e = edge[0];
@@ -395,15 +411,17 @@ int main()
     }
     */
 
-    
-    // Part 4: Priting Result
-    
+    // Output
+    /// Part 4: Priting Result
+
     // Finding communities from label
     set<int> res[n+1];
     for(int i = 0; i <= n; i++)
     {
-        for(auto &[l, bf]: Label[i])
+        for(auto it: Label[i])
         {
+            auto l = it.first;
+            auto bf = it.second;
             res[l].insert(i);
         }
     }
@@ -426,7 +444,7 @@ int main()
     // cout << endl;
 
     // Removing communities which are subset of other community
-    vector<set<int>> communities; 
+    vector<set<int>> communities;
     for(int i = 0; i < comm_set.size(); i++)
     {
         int is_subset = 0;
@@ -455,7 +473,6 @@ int main()
         for(auto x: s) cout << x << " ";
         cout << endl;
     }
-
     return 0;
 }
 
