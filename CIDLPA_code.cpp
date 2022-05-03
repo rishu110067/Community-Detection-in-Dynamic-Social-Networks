@@ -22,17 +22,22 @@ x3 - y3
 
 */
 
+
 #include <bits/stdc++.h>
 using namespace std;
 
-const int N = 10000, T = 100;   // setting maximum no. of nodes 10000 and max no. of timestamps 100
-set<int> adj[T][N];             // adj[T] is adjacency list representation of graph at timestamp t
-set<pair<int,int>> edge[T];     // edge[t] stores the edge list for timestamp t
-set<int> G[T];                  // G[t] is vertex set of nodes of Graph at timestamp t
-map<int,double> Label[N];       // Label[x] is for labelset of node x, where label[x][l] tells the belonging factor of  node x in community l
-map<int,double> b[T][N];        // b[t][x][l] tells the belonging factor of node x in community label at timestamp t
-double S[2][N];                 // S[0][x] and S[1][x] tells the belonging factor of node x to S0 and S1 state respectively
+const int N = 10000;
+const int T = 100;          // setting maximum no. of nodes 10000 and max no. of timestamps 100
+set<int> adj[T][N];         // adj[T] is adjacency list representation of graph at timestamp t
+set<pair<int,int>> edge[T]; // edge[t] stores the edge list for timestamp t
+set<int> G[T];              // G[t] is vertex set of nodes of Graph at timestamp t
+map<int,double> Label[N];   // Label[x] is labelset of node x
+                            // label[x][l] tells belonging factor of node x in community l
+map<int,double> b[T][N];    // b[t][x][l] tells belonging factor of node x in community l at timestamp t
+double S[2][N];             // S[0][x] and S[1][x] tells S0 and S1 belonging of node x
 
+
+// finds change in vertex set from timestamp t1 to t2
 set<int> v_change(int t1, int t2)
 {
     set<int> s;
@@ -44,6 +49,7 @@ set<int> v_change(int t1, int t2)
     return s;
 }
 
+// finds change in edge set from timestamp t to t+1 
 set<pair<int,int>> e_change(int t)
 {
     set<pair<int,int>> s;
@@ -60,6 +66,7 @@ set<pair<int,int>> e_change(int t)
     return s;
 }
 
+// finds value strength (i -> j)
 double find_strength(int i, int j, int t)
 {
     int set_div = 0;
@@ -72,6 +79,7 @@ double find_strength(int i, int j, int t)
     return val;
 }
 
+// finds value strength from x to all neighbours of x  
 vector<double> cal_strength(int x, vector<int> neighb, int t)
 {
     vector<double> strength;
@@ -83,6 +91,7 @@ vector<double> cal_strength(int x, vector<int> neighb, int t)
     return strength;
 }
 
+// finds s1 and s0 belonging based on the value strengths
 void find_belonging(int i, vector<double> &strength)
 {
     double sum_strength = 0;
@@ -91,6 +100,7 @@ void find_belonging(int i, vector<double> &strength)
     S[0][i] = 1.00 - S[1][i];
 }
 
+// finds vertex/nodes set given edge set e
 set<int> find_nodes(set<pair<int,int>> e)
 {
     set<int> nodes;
@@ -104,6 +114,7 @@ set<int> find_nodes(set<pair<int,int>> e)
     return nodes;
 }
 
+// finds candidate label set for each neighbour node
 vector<int> get_labels(vector<int> &neighb)
 {
     vector<int> labels;
@@ -126,6 +137,7 @@ vector<int> get_labels(vector<int> &neighb)
     return labels;
 }
 
+// finds vote for each node in candidate label set
 vector<double> compute_vote(vector<int> &candidateLabels, vector<int> &neighb)
 {
     // each neighbour chooses a label and candidateLabels set and votes it
@@ -134,19 +146,19 @@ vector<double> compute_vote(vector<int> &candidateLabels, vector<int> &neighb)
     for(int i = 0; i < candidateLabels.size(); i++)
     {
         double v = 0.00;
-        for(int k =0;k< neighb.size();k++){
+        for(int k = 0; k < neighb.size(); k++) {
             int j = neighb[k];
             int sl = candidateLabels[i];
-            if(Label[j].find(sl) != Label[j].end()){
+            if(Label[j].find(sl) != Label[j].end()) {
                 v += (double)S[0][j] * Label[j][sl] + (double)S[1][j] * ((1 - Label[j][sl]) / 3.0);
             }
         }
         vote.push_back(v);
     }
     return vote;
-
 }
 
+// returns the label in candidate label set with the maximum vote
 int get_maximum_vote(vector<double> &vote, vector<int> &candidateLabels)
 {
     double mx_vote = 0;
@@ -162,6 +174,7 @@ int get_maximum_vote(vector<double> &vote, vector<int> &candidateLabels)
     return mx_vote_label;
 }
 
+// normalizes and updates the belonging factor of label set of node x
 void normalize(int x, int t)
 {
     vector<pair<int,int>> remove;
@@ -169,6 +182,7 @@ void normalize(int x, int t)
     {
         auto c = it.first;
         auto bf = it.second;
+        
         // Finding new belonging factor for the next timestamp
         double new_bf = 0;
         for(auto y: adj[t][x])
@@ -187,6 +201,7 @@ void normalize(int x, int t)
             remove.push_back({x,c});
         }
     }
+    
     // Removing all the communities with new belonging factor 0 from their corresponding node's label set
     for(auto it: remove)
     {
@@ -218,6 +233,7 @@ void normalize(int x, int t)
     }
 }
 
+// remove labels with belonging factor less than threshold r in the label set of each node
 void remove_labels(int t, int r, set<int> &set_changedNodes)
 {
     for(auto x: set_changedNodes)
@@ -274,7 +290,6 @@ int main()
     freopen("output.txt", "w", stdout);
 
     // Input: n = no of nodes, ts = no of timestamps
-
     int n, ts;
     double r = 0.5;
     cin >> n >> ts;
@@ -303,7 +318,7 @@ int main()
     }
     ts++;
 
-
+    
     // Part 1
     set<int> v = G[0];
     for(int t = 0; t < ts; t++)
@@ -415,6 +430,7 @@ int main()
         for(auto x: s) cout << x << " ";
         cout << endl;
     }
+    
     return 0;
 }
 
