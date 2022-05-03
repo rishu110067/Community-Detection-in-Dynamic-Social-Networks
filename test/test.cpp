@@ -274,7 +274,7 @@ int main()
 
 
     int n, ts;
-    double r = 0.2;
+    double r = 0.5;
     cin >> n >> ts;
     for(int t = 0; t < ts; t++)
     {
@@ -289,8 +289,17 @@ int main()
             adj[t][y].insert(x);
             G[t].insert(x);
             G[t].insert(y);
+            if(t == ts-1) 
+            {
+                edge[ts].insert({x, y});
+                adj[ts][x].insert(y);
+                adj[ts][y].insert(x);
+                G[ts].insert(x);
+                G[ts].insert(y);
+            }
         }
     }
+    ts++;
 
 
 
