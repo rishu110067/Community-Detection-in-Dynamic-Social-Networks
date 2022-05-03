@@ -378,7 +378,8 @@ int main()
         remove_labels(t, r, set_changedNodes);
     }
     
-    // Part 4: Priting Result
+  
+    // Findig and Printing Result
 
     // Finding communities from label
     set<int> res[n+1];
@@ -402,6 +403,7 @@ int main()
         comm_set.push_back(s);
     }
 
+    // Removing subset communities
     vector<set<int>> communities;
     for(int i = 0; i < comm_set.size(); i++)
     {
