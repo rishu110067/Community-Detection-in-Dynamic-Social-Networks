@@ -29,9 +29,9 @@ const int N = 10000, T = 100;   // setting maximum no. of nodes 10000 and max no
 set<int> adj[T][N];             // adj[T] is adjacency list representation of graph at timestamp t
 set<pair<int,int>> edge[T];     // edge[t] stores the edge list for timestamp t
 set<int> G[T];                  // G[t] is vertex set of nodes of Graph at timestamp t
-map<int,double> Label[N];       // Label[x][l], x -> node, l -> label
-map<int,double> b[T][N];        // b[t][x][l], x -> node, l -> label
-double S[2][N];                 // S[i][x] is belonging factor of node x to Si state
+map<int,double> Label[N];       // Label[x] is for labelset of node x, where label[x][l] tells the belonging factor of  node x in community l
+map<int,double> b[T][N];        // b[t][x][l] tells the belonging factor of node x in community label at timestamp t
+double S[2][N];                 // S[0][x] and S[1][x] tells the belonging factor of node x to S0 and S1 state respectively
 
 set<int> v_change(int t1, int t2)
 {
