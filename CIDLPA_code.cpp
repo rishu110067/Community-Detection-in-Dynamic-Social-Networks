@@ -118,16 +118,13 @@ set<int> find_nodes(set<pair<int,int>> e)
 vector<int> get_labels(vector<int> &neighb)
 {
     vector<int> labels;
-    for(auto x: neighb)
-    {
+    for(auto x: neighb) {
         double mx_bf = 0;
         int mx_label = x;
-        for(auto it: Label[x])
-        {
+        for(auto it: Label[x]) {
             auto l = it.first;
             auto bf = it.second;
-            if(bf > mx_bf)
-            {
+            if(bf > mx_bf) {
                 mx_label = l;
                 mx_bf = bf;
             }
@@ -403,7 +400,7 @@ int main()
         comm_set.push_back(s);
     }
 
-    // Removing subset communities
+    // Removing communities which are subset of other community
     vector<set<int>> communities;
     for(int i = 0; i < comm_set.size(); i++)
     {
