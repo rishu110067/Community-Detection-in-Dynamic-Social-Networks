@@ -175,15 +175,13 @@ int get_maximum_vote(vector<double> &vote, vector<int> &candidateLabels)
 void normalize(int x, int t)
 {
     vector<pair<int,int>> remove;
-    for(auto it: Label[x])
-    {
+    for(auto it: Label[x]) {
         auto c = it.first;
         auto bf = it.second;
-        
+    
         // Finding new belonging factor for the next timestamp
         double new_bf = 0;
-        for(auto y: adj[t][x])
-        {
+        for(auto y: adj[t][x]) {
             // If c community is present in the label set of y and has non zero belongiong factor
             if(b[t][y].find(c) != b[t][y].end())
                 new_bf += b[t][y][c];
@@ -192,16 +190,14 @@ void normalize(int x, int t)
         new_bf /= adj[t][x].size();
         Label[x][c] = new_bf;
         b[t+1][x][c] = new_bf;
-        if(new_bf == 0.00)
-        {
+        if(new_bf == 0.00) {
             // If new belonging factor is 0 then we will remove c from label set of x
             remove.push_back({x,c});
         }
     }
     
     // Removing all the communities with new belonging factor 0 from their corresponding node's label set
-    for(auto it: remove)
-    {
+    for(auto it: remove) {
         auto x = it.first;
         auto c = it.second;
         Label[x].erase(c);
@@ -210,18 +206,15 @@ void normalize(int x, int t)
 
     // Normalize sum of bf to 1
     double sum = 0;
-    for(auto it: b[t+1][x])
-    {
+    for(auto it: b[t+1][x]) {
         auto l = it.first;
         auto bf = it.second;
         sum += bf;
     }
     if(sum == 0){ Label[x][x] = 1; b[t+1][x][x] = 1; }
-    else
-    {
+    else {
         double add_val = (1.00 - sum)/(b[t+1][x].size());
-        for(auto it: b[t+1][x])
-        {
+        for(auto it: b[t+1][x]) {
             auto l = it.first;
             auto bf = it.second;
             b[t+1][x][l] += add_val;
@@ -233,43 +226,38 @@ void normalize(int x, int t)
 // remove labels with belonging factor less than threshold r in the label set of each node
 void remove_labels(int t, int r, set<int> &set_changedNodes)
 {
-    for(auto x: set_changedNodes)
-    {
+    for(auto x: set_changedNodes) {
         // Remove labels with belonging factor less than r
         vector<int> remove;
         double sum = 0;
         int mx_label = x;
         double mx_bf = 0;
-        for(auto it: Label[x])
-        {
+        for(auto it: Label[x]) {
             auto l = it.first;
             auto bf = it.second;
-            if(bf < r)
-            {
+            if(bf < r) {
                 remove.push_back(l);
                 Label[x].erase(l);
                 b[t+1][x].erase(l);
                 sum += bf;
-                if(bf > mx_bf)
-                {
+                if(bf > mx_bf) {
                     mx_bf = bf;
                     mx_label =l;
                 }
             }
         }
 
-        // If label set of node x becomes empty then pick the label with max belonging factor removed, and set it bf = 1
-        if(Label[x].empty())
-        {
+        // If label set of node x becomes empty
+        // then pick the label with max belonging factor removed, and set it bf = 1
+        if(Label[x].empty()) {
             Label[x][mx_label] = 1.00;
             b[t+1][x][mx_label] = 1.00;
         }
-        else
-        {
-            // Add the val to belonging factor of all the labels of node x remaining so that sum of bf of labels remain 1
+        else {
+            // Add the val to belonging factor of all the labels of node x remaining 
+            // so that sum of bf of labels remain 1
             double val = (1.00-sum) / Label[x].size();
-            for(auto it: Label[x])
-            {
+            for(auto it: Label[x]) {
                 auto l = it.first;
                 auto bf = it.second;
                 Label[x][l] += val;
